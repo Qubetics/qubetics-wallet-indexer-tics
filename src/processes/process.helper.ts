@@ -2,7 +2,6 @@ import database from "../config/db";
 import { QueryTypes } from "sequelize";
 import { CoinInterface, CoinsModel, TicsOldBLockModel, WalletInterface } from "../models";
 import redisClient from "../config/redis";
-import { promisify } from "util";
 import { config } from "../config/config";
 import { TokenStandard } from "../enum";
 import { global_helper } from "../helpers/global_helper";
@@ -20,8 +19,7 @@ class TicsProcessHelper {
   }
   public async getKeyValuePair(keyName: string, field: string) {
     try {
-      const getAsync = promisify(redisClient.HGET).bind(redisClient);
-      const value = await getAsync(keyName, field.toUpperCase() || "");
+      const value = await redisClient.hGet(keyName, field.toUpperCase() || "");
       return value;
     } catch (err: any) {
       console.error('getKeyValuePair >>>>', err);
@@ -48,7 +46,7 @@ class TicsProcessHelper {
   }
   public async setKeyValuePair(keyName: string, field: string, value: string) {
     try {
-      redisClient.hset(keyName, field.toUpperCase(), value);
+      await redisClient.hSet(keyName, field.toUpperCase(), value);
     } catch (err: any) {
       console.error('setKeyValuePair >>>', err);
     }
@@ -87,12 +85,8 @@ class TicsProcessHelper {
 
   public async deleteKeyValuePair(keyName: string, field: string) {
     try {
-      redisClient.hdel(keyName, field.toUpperCase(), function (err) {
-        if (err) {
-          throw err;
-        }
-        return true;
-      })
+      await redisClient.hDel(keyName, field.toUpperCase());
+      return true;
     } catch (err: any) {
       console.error("Error in deleteKeyValuePair>>>", err)
       return false;
