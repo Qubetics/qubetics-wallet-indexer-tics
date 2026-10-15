@@ -9,6 +9,15 @@ import { getMessaging, Messaging } from 'firebase-admin/messaging';
 import { config } from "../config";
 import { Op } from "sequelize";
 
+// bignumber.js 10+ throws on input such as "0x" where 9 returned NaN; keep returning NaN so callers behave as before.
+const toBigNumber = (value: any): BigNumber => {
+  try {
+    return new BigNumber(value);
+  } catch {
+    return new BigNumber(NaN);
+  }
+};
+
 class UtilityHelper {
     public messaging!: Messaging;
     constructor() {
@@ -20,8 +29,8 @@ class UtilityHelper {
 
     bigNumberSafeMath = async (c: any, operation: any, d: any) => {
         18;
-        var a = new BigNumber(c);
-        var b = new BigNumber(d);
+        var a = toBigNumber(c);
+        var b = toBigNumber(d);
         var rtn: any;
         switch (operation.toLowerCase()) {
             case "-":
@@ -46,7 +55,7 @@ class UtilityHelper {
 
     bigNumberSafeConversion = async (val: number) => {
         const amount = val.toString();
-        const value = new BigNumber(amount);
+        const value = toBigNumber(amount);
         return value.toFixed();
     };
 
